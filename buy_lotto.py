@@ -22,6 +22,9 @@ SLACK_CHANNEL = sys.argv[4]
 # 구매 개수를 설정
 COUNT = sys.argv[5]
 
+# 선택할 번호들 (환경 변수로 받을 수도 있고 없을 수도 있음)
+SELECTED_NUMBERS = sys.argv[6:]  # 추가적인 숫자들을 리스트로 받음
+
 
 class BalanceError(Exception):
     def __init__(self, message="An error occurred", code=None):
@@ -134,7 +137,7 @@ def run(playwright: Playwright) -> None:
         # "비정상적인 방법으로 접속하였습니다. 정상적인 PC 환경에서 접속하여 주시기 바랍니다." 우회하기
         page.locator("#popupLayerAlert").get_by_role("button", name="확인").click()
     
-         # Click text=자동번호발급
+        # Click text=자동번호발급
         page.click("text=혼합선택")
         #page.click('#num2 >> text=자동번호발급')
 
@@ -142,10 +145,11 @@ def run(playwright: Playwright) -> None:
         # Select 1
         page.select_option("select", str(COUNT))
 
+        
+        page.click("text=6")
         page.click("text=자동선택")
 
-        page.click("text=33")
-        page.click("text=12")
+
 
         page.click("text=확인")
         page.click('input:has-text("구매하기")')  # Click input:has-text("구매하기")

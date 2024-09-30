@@ -20,6 +20,10 @@ SLACK_API_URL = "https://slack.com/api/chat.postMessage"
 SLACK_BOT_TOKEN = sys.argv[3]
 SLACK_CHANNEL = sys.argv[4]
 
+# 구매 개수를 설정
+COUNT = sys.argv[5]
+
+
 
 def get_now() -> datetime:
     # 한국 시간대 객체 생성
