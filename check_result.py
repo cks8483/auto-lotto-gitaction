@@ -1,4 +1,6 @@
 import re
+import os
+from dotenv import load_dotenv
 import sys
 import time
 from datetime import datetime
@@ -9,19 +11,34 @@ from requests import post, Response, Session
 from playwright.sync_api import Playwright, sync_playwright
 from bs4 import BeautifulSoup
 
-RUN_FILE_NAME = sys.argv[0]
-
-# 동행복권 아이디와 패스워드를 설정
-USER_ID = sys.argv[1]
-USER_PW = sys.argv[2]
-
-# SLACK 설정
+# RUN_FILE_NAME = sys.argv[0]
 SLACK_API_URL = "https://slack.com/api/chat.postMessage"
-SLACK_BOT_TOKEN = sys.argv[3]
-SLACK_CHANNEL = sys.argv[4]
 
-# 구매 개수를 설정
-COUNT = sys.argv[5]
+# .env 파일 로드
+load_dotenv()
+
+# 환경변수가 커맨드 라인 인자로 전달되지 않았을 경우 .env 파일에서 로드
+if len(sys.argv) < 6:
+    USER_ID = os.getenv('LOTTO_USER_ID')
+    USER_PW = os.getenv('LOTTO_USER_PW')
+    SLACK_BOT_TOKEN = os.getenv('SLACK_BOT_TOKEN')
+    SLACK_CHANNEL = os.getenv('SLACK_CHANNEL')
+    COUNT = os.getenv('LOTTO_COUNT', '5')  # 기본값 5
+else:
+    USER_ID = sys.argv[1]
+    USER_PW = sys.argv[2]
+    SLACK_BOT_TOKEN = sys.argv[3]
+    SLACK_CHANNEL = sys.argv[4]
+    COUNT = sys.argv[5]
+
+# 필수 환경변수 확인
+required_vars = {
+    'USER_ID': USER_ID,
+    'USER_PW': USER_PW,
+    'SLACK_BOT_TOKEN': SLACK_BOT_TOKEN,
+    'SLACK_CHANNEL': SLACK_CHANNEL
+}
+
 
 
 
@@ -87,6 +104,8 @@ def run(playwright: Playwright) -> None:
 
         # 당첨 결과 및 번호 확인, parsing issue 때문에 3중 retry
         page.goto("https://dhlottery.co.kr/common.do?method=main")
+        page.wait_for_selector("#article div.content", timeout=10000)  # 10초 대기
+        # print(page.content())  # 현재 페이지의 HTML 내용을 출력
         retry_cnt = 0
         result_info = page.query_selector("#article div.content")
         while not result_info and retry_cnt < 3:
@@ -119,6 +138,7 @@ def run(playwright: Playwright) -> None:
         url = "https://dhlottery.co.kr/myPage.do"
         querystring = {"method": "lottoBuyList"}
         now_date = get_now().date().strftime("%Y%m%d")
+        # print(f"now_date={now_date}")
         payload = f"searchStartDate={now_date}&searchEndDate={now_date}&winGrade=2"
         headers = {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -138,9 +158,12 @@ def run(playwright: Playwright) -> None:
         }
         res = session.post(url, data=payload, headers=headers, params=querystring)
         html = BeautifulSoup(res.content, "lxml")
+        # 파싱된 HTML 구조 확인
+        # print("Parsed table rows:", html.select("tbody > tr:nth-child(1) > td:nth-child(4) > a"))
         a_tag_href = html.select_one(
             "tbody > tr:nth-child(1) > td:nth-child(4) > a"
         ).get("href")
+        # print(a_tag_href)
         detail_info = re.findall(r"\d+", a_tag_href)
         page.goto(
             url=f"https://dhlottery.co.kr/myPage.do?method=lotto645Detail&orderNo={detail_info[0]}&barcode={detail_info[1]}&issueNo={detail_info[2]}"
