@@ -146,7 +146,7 @@ def run(playwright: Playwright) -> None:
         page.select_option("select", str(COUNT))
 
         
-        page.click("text=6")
+        page.click("text=4")
         page.click("text=자동선택")
 
 
