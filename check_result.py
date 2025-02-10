@@ -1,6 +1,5 @@
 import re
 import os
-from dotenv import load_dotenv
 import sys
 import time
 from datetime import datetime
@@ -14,8 +13,6 @@ from bs4 import BeautifulSoup
 # RUN_FILE_NAME = sys.argv[0]
 SLACK_API_URL = "https://slack.com/api/chat.postMessage"
 
-# .env 파일 로드
-load_dotenv()
 
 # 환경변수가 커맨드 라인 인자로 전달되지 않았을 경우 .env 파일에서 로드
 if len(sys.argv) < 6:
