@@ -130,13 +130,14 @@ def buy_lotto_fixed_number(page, count, fixed_number):
     page.select_option("select", str(count))
 
     # 3) 고정 숫자 클릭
-    page.click(f"text='{fixed_number}'")
+    checkbox_selector = f"#check645num{fixed_number}"
+    page.click(checkbox_selector)
 
     # 4) 자동선택
     page.click("text=자동선택")
 
     # 5) 확인 (#btnSelectNum)
-    page.click("#btnSelectNum")
+    page.locator("#btnSelectNum").click()
 
     # 6) 구매하기
     page.locator("input[value='구매하기']").first.click()
