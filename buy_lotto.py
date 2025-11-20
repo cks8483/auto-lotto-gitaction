@@ -139,7 +139,7 @@ def buy_lotto_fixed_number(page, count, fixed_number):
     page.click("#btnSelectNum")
 
     # 6) 구매하기
-    page.click("text=구매하기")
+    page.locator("input[value='구매하기']").first.click()
 
     print(f"[반자동 완료] {count}게임 / 고정번호 = {fixed_number}")
 
