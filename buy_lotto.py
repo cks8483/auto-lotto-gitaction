@@ -90,7 +90,7 @@ def hook_slack_btn() -> Response:
 def log(msg: str):
     print("[LOG]", msg)
     # 필요 없으면 아래 주석 처리
-    # hook_slack(msg)
+    hook_slack(msg)
 
 
 def error_log(page, msg: str):
