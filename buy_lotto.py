@@ -142,8 +142,8 @@ def buy_lotto_fixed_number(page, count, fixed_number):
     page.locator("input[value='구매하기']").first.click()
 
     # 7) 최종 구매 확인
-    page.wait_for_selector("input[type=button][value='확인']", timeout=5000)
-    page.locator("input[type=button][value='확인']").click()
+    page.wait_for_selector("#popupLayerConfirm input[value='확인']", timeout=7000)
+    page.locator("#popupLayerConfirm input[value='확인']").click()
 
     print(f"[반자동 완료] {count}게임 / 고정번호 = {fixed_number}")
 
