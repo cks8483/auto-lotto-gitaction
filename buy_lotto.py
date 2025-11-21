@@ -90,7 +90,7 @@ def hook_slack_btn() -> Response:
 def log(msg: str):
     print("[LOG]", msg)
     # 필요 없으면 아래 주석 처리
-    hook_slack(msg)
+    # hook_slack(msg)
 
 
 def error_log(page, msg: str):
@@ -120,33 +120,71 @@ def error_log(page, msg: str):
 def buy_lotto_fixed_number(page, count, fixed_number):
     """
     반자동 구매
-    (초기화 → 적용수량 → fixed_number 클릭 → 자동선택 → 확인 → 구매하기)
+    (혼합선택 → 초기화 → 적용수량 → fixed_number 클릭 → 자동선택 → 확인 → 구매하기)
     """
     
-    # 1) 초기화
+    # 1) 혼합선택 탭 클릭
+    page.click("text=혼합선택")
+    page.wait_for_timeout(500)  # 탭 전환 대기
+
+    # 2) 초기화
     page.click("text=초기화")
+    page.wait_for_timeout(300)
 
-    # 2) 적용수량 COUNT
-    page.select_option("select", str(count))
+    # 3) 구매 개수(적용 수량)
+    page.select_option("#amoundApply", str(count))
+    page.wait_for_timeout(300)
 
-    # 3) 고정 숫자 클릭
-    checkbox_selector = f"#check645num{fixed_number}"
-    page.click(checkbox_selector)
+    # 4) 고정번호 클릭 - label을 직접 클릭
+    try:
+        # label을 통한 클릭 시도
+        label_selector = f'label[for="check645num{fixed_number}"]'
+        label = page.locator(label_selector)
+        label.scroll_into_view_if_needed()
+        page.wait_for_timeout(500)  # 스크롤 완료 대기
+        label.click(force=True)
+        print(f"고정번호 {fixed_number} label 클릭 성공")
+    except Exception as e:
+        print(f"label 클릭 실패, checkbox 직접 클릭 시도: {e}")
+        # checkbox 직접 클릭 시도
+        checkbox = page.locator(f"#check645num{fixed_number}")
+        page.evaluate(f"document.getElementById('check645num{fixed_number}').scrollIntoView({{block: 'center'}})")
+        page.wait_for_timeout(500)
+        checkbox.click(force=True)
 
-    # 4) 자동선택
-    page.click("text=자동선택")
+    page.wait_for_timeout(500)
 
-    # 5) 확인 (#btnSelectNum)
-    page.locator("#btnSelectNum").click()
+    # 5) 자동선택 (label for 구조)
+    auto_label = page.locator('label[for="checkAutoSelect"]')
+    auto_label.scroll_into_view_if_needed()
+    page.wait_for_timeout(300)
+    auto_label.click(force=True)
+    page.wait_for_timeout(500)
 
-    # 6) 구매하기
-    page.locator("input[value='구매하기']").first.click()
+    # 6) 선택 확정 버튼
+    confirm_btn = page.locator("#btnSelectNum")
+    confirm_btn.scroll_into_view_if_needed()
+    page.wait_for_timeout(300)
+    confirm_btn.click()
+    page.wait_for_timeout(1000)  # 번호 적용 대기
 
-    # 7) 최종 구매 확인
-    page.wait_for_selector("#popupLayerConfirm input[value='확인']", timeout=7000)
-    page.locator("#popupLayerConfirm input[value='확인']").click()
+    # 7) 구매하기
+    buy_btn = page.locator("#btnBuy")
+    buy_btn.scroll_into_view_if_needed()
+    page.wait_for_timeout(300)
+    buy_btn.click()
+    page.wait_for_timeout(1000)
 
-    print(f"[반자동 완료] {count}게임 / 고정번호 = {fixed_number}")
+    # 8) 구매확인 팝업 처리
+    try:
+        confirm_popup = page.locator('#popupLayerConfirm input[value="확인"]')
+        confirm_popup.wait_for(state="visible", timeout=5000)
+        confirm_popup.click()
+        page.wait_for_timeout(1000)
+    except:
+        pass
+
+    print(f"반자동 구매 완료 → 고정번호 {fixed_number}, {count}게임")
 
 
 
@@ -246,17 +284,11 @@ def run(playwright: Playwright) -> None:
                 log("비정상 접근 팝업 닫음")
         except:
             pass
-
-        # ============================
-        # 4. 혼합선택 탭 클릭
-        # ============================
-        log("혼합선택 탭 클릭")
-        page.click("text=혼합선택")
+        
 
         # ============================
         # ★★★ 반자동 구매 실행 ★★★
         # ============================
-        FIXED_NUMBER = 13   # 원하는 숫자 설정
 
         log(f"반자동 구매 실행 (필수번호={FIXED_NUMBER})")
         buy_lotto_fixed_number(page, COUNT, FIXED_NUMBER)
