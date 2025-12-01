@@ -263,7 +263,7 @@ def run(playwright: Playwright) -> None:
         user_name = money_info_text[0].strip()
         deposit = int(money_info_text[2].replace(",", "").replace("원", "").strip())
 
-        log(f"로그인 사용자: {user_name}, 예치금: {deposit:,}원")
+        hook_slack(f"로그인 사용자: {user_name}, 예치금: {deposit:,}원")
 
         total_price = 1000 * COUNT
         if deposit < total_price:
